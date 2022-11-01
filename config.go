@@ -1,4 +1,4 @@
-package smppapp
+package main
 
 import (
 	"os"
@@ -51,7 +51,7 @@ func (c *SmppConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 func GetSmppConf() (*SmppConfig, error) {
-	c := SmppConfig{}
+	c := &SmppConfig{}
 	yamlFile, err := os.ReadFile("smpp-app.yaml")
 	if err != nil {
 		return nil, err
@@ -59,5 +59,5 @@ func GetSmppConf() (*SmppConfig, error) {
 	if err = yaml.Unmarshal(yamlFile, c); err != nil {
 		return nil, err
 	}
-	return &c, nil
+	return c, nil
 }

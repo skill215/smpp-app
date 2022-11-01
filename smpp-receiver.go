@@ -1,4 +1,4 @@
-package smppapp
+package main
 
 import (
 	"context"
