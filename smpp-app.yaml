@@ -1,19 +1,21 @@
 smpp-app:
   smpp-server:
-    server-addr: localhost
-    server-port: 8443
+    addr: localhost
+    port: 8443
     user: smpp
     password: test
   smpp-client:
-    bind-type: transmiter
+    bind-type: receiver
   smpp-ao:
-    src_npi: 1
-    src_ton: 1
-    dst_npi: 1
-    dst_ton: 1
-    oaddr: 1234
+    src: 
+      npi: 1
+      ton: 1
+      oaddr: 1234
+    dst:
+      ton: 1
+      npi: 1
     content: just a test message without concat
   service:
-    restful-port: 8080
+    port: 8080
   log:
     level: info
