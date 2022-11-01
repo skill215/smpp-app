@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 
 	"github.com/creasty/defaults"
@@ -59,5 +60,6 @@ func GetSmppConf() (*SmppConfig, error) {
 	if err = yaml.Unmarshal(yamlFile, c); err != nil {
 		return nil, err
 	}
+	log.Printf("%+v", c)
 	return c, nil
 }
