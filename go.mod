@@ -1,4 +1,4 @@
-module smppapp
+module github.com/skill215/smpp-app
 
 go 1.19
 

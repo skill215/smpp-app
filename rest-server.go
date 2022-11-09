@@ -1,24 +1,39 @@
-package main
+package smppapp
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"net/http"
 )
+
+type SmppApp interface {
+	Init()
+	Start()
+	Stop()
+}
+
+type App struct {
+	apps []SmppApp
+	conf *AppConfig
+}
+
+func (a *App) Init() {}
 
 func main() {
 	ctx := context.Background()
+	// get smpp app config
 	conf, err := GetSmppConf()
 	if err != nil {
 		panic(err)
 	}
-	receiver, err := ProvideSmppReceiver(ctx, conf)
-	if err != nil {
-		panic(err)
-	}
-	if err = receiver.bind(); err != nil {
-		panic(err)
-	}
-	for i := 0; i < 10; i++ {
-		go receiver.bind()
-	}
-	<-ctx.Done()
+	app := App{conf: conf}
+	// start smpp app one by one
+	app.Init()
+
+	addr := conf.getRestAddr()
+
+	http.HandleFunc("/startLoop", startLoop)
+	http.HandleFunc("/stopLoop", stopLoop)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(addr), nil))
 }

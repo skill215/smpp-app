@@ -1,21 +1,37 @@
-smpp-app:
-  smpp-server:
-    addr: localhost
-    port: 8443
-    user: smpp
-    password: test
-  smpp-client:
-    bind-type: receiver
-  smpp-ao:
-    src: 
-      npi: 1
-      ton: 1
-      oaddr: 1234
-    dst:
-      ton: 1
-      npi: 1
-    content: just a test message without concat
-  service:
+service:
+  smpp:
+  - 
+    server:
+      addr: localhost
+      port: 5588
+      user: smpp
+      password: test
+    client:
+      bind-type: transmitter
+      conn-num: 10
+    message:
+      traffic: 100
+      send:
+        src: 
+          npi: 1
+          ton: 1
+          oaddr: 1234
+        dst:
+          ton: 1
+          npi: 1
+        require-sr: false
+        content: just a test message without concat
+  - 
+    server:
+      addr: localhost
+      port: 5588
+      user: smpp
+      password: test
+    client:
+      bind-type: receiver
+      conn-num: 10
+  rest:
+    addr: 0.0.0.0
     port: 8080
   log:
     level: info

@@ -1,49 +1,61 @@
-package main
+package smppapp
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/creasty/defaults"
 	yaml "gopkg.in/yaml.v3"
 )
 
-type SmppConfig struct {
-	SmppApp struct {
-		SmppServer struct {
-			Addr     string `default:"localhost" yaml:"addr"`
-			Port     uint16 `default:"8443" yaml:"port"`
-			User     string `yaml:"user"`
-			Password string `yaml:"password"`
-		} `yaml:"smpp-server"`
-		SmppClient struct {
-			Type string `default:"receiver" yaml:"bind-type"`
-		} `yaml:"smpp-client"`
-		SmppMessage struct {
+type Smpp struct {
+	Server struct {
+		Addr     string `default:"localhost" yaml:"addr"`
+		Port     uint16 `default:"5588" yaml:"port"`
+		User     string `yaml:"username"`
+		Password string `yaml:"password"`
+	} `yaml:"server"`
+	Client struct {
+		Type  string `default:"transmitter" yaml:"bind-type"`
+		Count uint16 `default:"10" yaml:"conn-num"`
+	}
+	Message struct {
+		Send struct {
 			Src struct {
-				Npi uint8 `default:"1" yaml:"npi"`
-				Ton uint8 `default:"1" yaml:"ton"`
+				Npi   uint16 `default:"1" yaml:"npi"`
+				Ton   uint16 `default:"1" yaml:"ton"`
+				Oaddr string `yaml:"oaddr"`
 			} `yaml:"src"`
 			Dst struct {
-				Npi uint8 `default:"1" yaml:"npi"`
-				Ton uint8 `default:"1" yaml:"ton"`
+				Npi uint16 `default:"1" yaml:"npi"`
+				Ton uint16 `default:"1" yaml:"ton"`
 			} `yaml:"dst"`
-			Content string `yaml:"content"`
-		} `yaml:"smpp-ao"`
-		Service struct {
+			Traffic   int    `yaml:"traffic"`
+			RequireSR bool   `default:"false" yaml:"require-sr"`
+			Content   string `yaml:"content"`
+		} `yaml:"send"`
+	} `yaml:"message"`
+}
+
+type AppConfig struct {
+	App struct {
+		SmppConn []Smpp `yaml:"smpp"`
+		Rest     struct {
 			Addr string `default:"0.0.0.0" yaml:"addr"`
-			Port uint16 `default:"8080" yaml:"port"`
-		} `yaml:"service"`
+			Port uint16 `default:"5000" yaml:"port"`
+		} `yaml:"rest"`
 		Log struct {
 			Level string `default:"info" yaml:"level"`
 		} `yaml:"log"`
-	} `yaml:"smpp-app"`
+	} `yaml:"serivce"`
 }
 
-func (c *SmppConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *AppConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	defaults.Set(c)
 
-	type plain SmppConfig
+	type plain AppConfig
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
 	}
@@ -51,8 +63,8 @@ func (c *SmppConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func GetSmppConf() (*SmppConfig, error) {
-	c := &SmppConfig{}
+func GetSmppConf() (*AppConfig, error) {
+	c := &AppConfig{}
 	yamlFile, err := os.ReadFile("smpp-app.yaml")
 	if err != nil {
 		return nil, err
@@ -62,4 +74,12 @@ func GetSmppConf() (*SmppConfig, error) {
 	}
 	log.Printf("%+v", c)
 	return c, nil
+}
+
+func (ac *AppConfig) getRestAddr() string {
+	return fmt.Sprintf("%s:%d", ac.App.Rest.Addr, ac.App.Rest.Port)
+}
+
+func (s *Smpp) IsTransmitter() bool {
+	return !strings.EqualFold("receiver", s.Client.Type)
 }

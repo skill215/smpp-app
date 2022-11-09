@@ -1,4 +1,4 @@
-package main
+package smppapp
 
 import (
 	"context"
@@ -13,17 +13,17 @@ import (
 var total atomic.Uint64
 
 type SmppReceiver struct {
-	conf *SmppConfig
+	conf *Smpp
 	rc   *smpp.Receiver
 }
 
-func ProvideSmppReceiver(ctx context.Context, conf *SmppConfig) (*SmppReceiver, error) {
+func ProvideSmppReceiver(ctx context.Context, conf *Smpp) (*SmppReceiver, error) {
 	sr := SmppReceiver{
 		conf: conf,
 		rc: &smpp.Receiver{
-			Addr:   fmt.Sprintf("%s:%d", conf.SmppApp.SmppServer.Addr, conf.SmppApp.SmppServer.Port),
-			User:   conf.SmppApp.SmppServer.User,
-			Passwd: conf.SmppApp.SmppServer.Password,
+			Addr:   fmt.Sprintf("%s:%d", conf.Server.Addr, conf.Server.Port),
+			User:   conf.Server.User,
+			Passwd: conf.Server.Password,
 		},
 	}
 	return &sr, nil
@@ -40,4 +40,14 @@ func (sr *SmppReceiver) bind() error {
 
 func handleAt(p pdu.Body) {
 	total.Add(1)
+}
+
+func (sr *SmppReceiver) Init() {}
+
+func (sr *SmppReceiver) Start() {
+
+}
+
+func (sr *SmppReceiver) Stop() {
+
 }
