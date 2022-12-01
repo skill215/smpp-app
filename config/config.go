@@ -1,4 +1,4 @@
-package smppapp
+package config
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
-type Smpp struct {
+type SmppConfig struct {
 	Server struct {
 		Addr     string `default:"localhost" yaml:"addr"`
 		Port     uint16 `default:"5588" yaml:"port"`
@@ -41,7 +41,7 @@ type Smpp struct {
 
 type AppConfig struct {
 	App struct {
-		SmppConn []Smpp `yaml:"smpp"`
+		SmppConn []SmppConfig `yaml:"smpp"`
 		Rest     struct {
 			Addr string `default:"0.0.0.0" yaml:"addr"`
 			Port uint16 `default:"5000" yaml:"port"`
@@ -76,10 +76,10 @@ func GetSmppConf() (*AppConfig, error) {
 	return c, nil
 }
 
-func (ac *AppConfig) getRestAddr() string {
+func (ac *AppConfig) GetRestAddr() string {
 	return fmt.Sprintf("%s:%d", ac.App.Rest.Addr, ac.App.Rest.Port)
 }
 
-func (s *Smpp) IsTransmitter() bool {
+func (s *SmppConfig) IsTransmitter() bool {
 	return !strings.EqualFold("receiver", s.Client.Type)
 }

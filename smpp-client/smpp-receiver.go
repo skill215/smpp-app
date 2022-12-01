@@ -1,23 +1,21 @@
-package smppapp
+package smppclient
 
 import (
 	"context"
 	"fmt"
 	"log"
-	"sync/atomic"
 
 	"github.com/skill215/go-smpp/smpp"
 	"github.com/skill215/go-smpp/smpp/pdu"
+	"github.com/skill215/smpp-app/config"
 )
 
-var total atomic.Uint64
-
 type SmppReceiver struct {
-	conf *Smpp
+	conf *config.SmppConfig
 	rc   *smpp.Receiver
 }
 
-func ProvideSmppReceiver(ctx context.Context, conf *Smpp) (*SmppReceiver, error) {
+func ProvideSmppReceiver(ctx context.Context, conf *config.SmppConfig) (*SmppReceiver, error) {
 	sr := SmppReceiver{
 		conf: conf,
 		rc: &smpp.Receiver{
@@ -39,7 +37,7 @@ func (sr *SmppReceiver) bind() error {
 }
 
 func handleAt(p pdu.Body) {
-	total.Add(1)
+
 }
 
 func (sr *SmppReceiver) Init() {}
