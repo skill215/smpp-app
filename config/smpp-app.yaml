@@ -8,9 +8,8 @@ service:
       password: test
     client:
       bind-type: transmitter
-      conn-num: 10
+      conn-num: 5
     message:
-      traffic: 100
       send:
         src: 
           npi: 1
@@ -19,6 +18,34 @@ service:
         dst:
           ton: 1
           npi: 1
+          daddr:
+            prefix: 123
+            suffix: 000
+            generate-length: 6
+        require-sr: false
+        content: just a test message without concat
+  - 
+    server:
+      addr: localhost
+      port: 5588
+      user: smpp
+      password: test
+    client:
+      bind-type: transceiver
+      conn-num: 5
+    message:
+      send:
+        src: 
+          npi: 1
+          ton: 1
+          oaddr: 1234
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 123
+            suffix: 000
+            generate-length: 6
         require-sr: false
         content: just a test message without concat
   - 

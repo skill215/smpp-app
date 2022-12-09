@@ -10,6 +10,32 @@ import (
 	yaml "gopkg.in/yaml.v3"
 )
 
+type AddrConfig struct {
+	Prefix       string `yaml:"prefix"`
+	Suffix       string `yaml:"suffix"`
+	GenerateLen  int    `default:"6" yaml:"generate-length"`
+	GenerateType string `default:"sequence" yaml:"generate-type"`
+	Start        int    `default:"0" yaml:"start"`
+	Stop         int    `yaml:"stop"`
+}
+
+type MessageConfig struct {
+	Send struct {
+		Src struct {
+			Npi   uint16 `default:"1" yaml:"npi"`
+			Ton   uint16 `default:"1" yaml:"ton"`
+			Oaddr string `yaml:"oaddr"`
+		} `yaml:"src"`
+		Dst struct {
+			Npi   uint16     `default:"1" yaml:"npi"`
+			Ton   uint16     `default:"1" yaml:"ton"`
+			Daddr AddrConfig `yaml:"daddr"`
+		} `yaml:"dst"`
+		RequireSR bool   `default:"false" yaml:"require-sr"`
+		Content   string `yaml:"content"`
+	} `yaml:"send"`
+}
+
 type SmppConfig struct {
 	Server struct {
 		Addr     string `default:"localhost" yaml:"addr"`
@@ -21,22 +47,7 @@ type SmppConfig struct {
 		Type  string `default:"transmitter" yaml:"bind-type"`
 		Count uint16 `default:"10" yaml:"conn-num"`
 	}
-	Message struct {
-		Send struct {
-			Src struct {
-				Npi   uint16 `default:"1" yaml:"npi"`
-				Ton   uint16 `default:"1" yaml:"ton"`
-				Oaddr string `yaml:"oaddr"`
-			} `yaml:"src"`
-			Dst struct {
-				Npi uint16 `default:"1" yaml:"npi"`
-				Ton uint16 `default:"1" yaml:"ton"`
-			} `yaml:"dst"`
-			Traffic   int    `yaml:"traffic"`
-			RequireSR bool   `default:"false" yaml:"require-sr"`
-			Content   string `yaml:"content"`
-		} `yaml:"send"`
-	} `yaml:"message"`
+	Message MessageConfig `yaml:"message"`
 }
 
 type AppConfig struct {
@@ -44,12 +55,12 @@ type AppConfig struct {
 		SmppConn []SmppConfig `yaml:"smpp"`
 		Rest     struct {
 			Addr string `default:"0.0.0.0" yaml:"addr"`
-			Port uint16 `default:"5000" yaml:"port"`
+			Port uint16 `default:"8080" yaml:"port"`
 		} `yaml:"rest"`
 		Log struct {
 			Level string `default:"info" yaml:"level"`
 		} `yaml:"log"`
-	} `yaml:"serivce"`
+	} `yaml:"service"`
 }
 
 func (c *AppConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -67,9 +78,11 @@ func GetSmppConf() (*AppConfig, error) {
 	c := &AppConfig{}
 	yamlFile, err := os.ReadFile("smpp-app.yaml")
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	if err = yaml.Unmarshal(yamlFile, c); err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	log.Printf("%+v", c)

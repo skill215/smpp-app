@@ -8,50 +8,52 @@ import (
 	gometrics "github.com/armon/go-metrics"
 	"github.com/sirupsen/logrus"
 	"github.com/skill215/go-smpp/smpp"
+	"github.com/skill215/go-smpp/smpp/pdu"
 	"github.com/skill215/smpp-app/broker"
 	"github.com/skill215/smpp-app/config"
 	msggenerator "github.com/skill215/smpp-app/msg-generator"
 	"golang.org/x/time/rate"
 )
 
-type SmppTransmiter struct {
+type SmppTransceiver struct {
 	log          *logrus.Logger
 	conf         *config.SmppConfig
-	tx           []chan interface{}
+	tr           []chan interface{}
 	inm          *gometrics.InmemSink
 	broker       *broker.Broker
 	msgGenerator *msggenerator.MsgGenerator
 }
 
-func ProvideSmppTransmitter(ctx context.Context, conf config.SmppConfig, inm *gometrics.InmemSink, broker *broker.Broker, log *logrus.Logger) *SmppTransmiter {
-	st := SmppTransmiter{
+func ProvideSmppTransceiver(ctx context.Context, conf config.SmppConfig, inm *gometrics.InmemSink, broker *broker.Broker, log *logrus.Logger) *SmppTransceiver {
+	tr := SmppTransceiver{
 		log:          log,
 		conf:         &conf,
 		inm:          inm,
 		broker:       broker,
-		tx:           []chan interface{}{},
+		tr:           []chan interface{}{},
 		msgGenerator: msggenerator.New(&conf.Message),
 	}
-	return &st
+	return &tr
 }
 
-func (st *SmppTransmiter) Init() {
-	st.log.Infof("transmitter init %+v", st.conf)
+func (st *SmppTransceiver) Init() {
+	st.log.Infof("transceiver init conf %+v", st.conf)
 	for i := 0; i < int(st.conf.Client.Count); i++ {
-		tx := smpp.Transmitter{
+		tr := &smpp.Transceiver{
 			Addr:   fmt.Sprintf("%s:%d", st.conf.Server.Addr, st.conf.Server.Port),
 			User:   st.conf.Server.User,
 			Passwd: st.conf.Server.Password,
 		}
 
 		msgCh := st.broker.Subscribe()
-		st.tx = append(st.tx, msgCh)
-		st.bind(&tx, msgCh)
+		st.tr = append(st.tr, msgCh)
+		st.bind(tr, msgCh)
 	}
 }
 
-func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
-	conn := tx.Bind()
+func (st *SmppTransceiver) bind(tc *smpp.Transceiver, msgCh chan interface{}) {
+	conn := tc.Bind()
+	tc.Handler = st.handleAT
 	limiter := rate.NewLimiter(0, 0)
 
 	// goroutine to reconnect
@@ -60,7 +62,7 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 			status := <-conn
 			if status.Error() != nil || status.Status().String() != "Connected" {
 				time.Sleep(5 * time.Second)
-				conn = tx.Bind()
+				conn = tc.Bind()
 			}
 		}
 	}()
@@ -81,9 +83,8 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 			if limiter.Allow() {
 				msg := st.msgGenerator.GenerateMsg()
 				// for USC2 encoding
-				smlist, err := st.submitMsg(tx, msg)
+				smlist, err := st.submitMsg(tc, msg)
 				if err != nil {
-					fmt.Println("transmiter error ", err)
 					time.Sleep(50 * time.Microsecond)
 				} else {
 					for _, sm := range smlist {
@@ -99,25 +100,34 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 			}
 		}
 	}()
-}
-
-func (st *SmppTransmiter) Start(tps int) {
 
 }
 
-func (st *SmppTransmiter) Stop() {
+func (st *SmppTransceiver) Start(tps int) {
 
 }
 
-func (st *SmppTransmiter) submitMsg(tx *smpp.Transmitter, msg *smpp.ShortMessage) ([]smpp.ShortMessage, error) {
+func (st *SmppTransceiver) Stop() {
+
+}
+
+func (st *SmppTransceiver) handleAT(p pdu.Body) {
+	st.log.Debugf("receive AT, ID: %s, Status: %s", p.Header().ID.String(), p.Header().Status.Error())
+	if p.Header().Status != 0x00000000 {
+		st.inm.IncrCounter([]string{"at failure"}, 1)
+	}
+	st.inm.IncrCounter([]string{"at"}, 1)
+}
+
+func (st *SmppTransceiver) submitMsg(tc *smpp.Transceiver, msg *smpp.ShortMessage) ([]smpp.ShortMessage, error) {
 	if len(msg.Text.Encode()) <= 132 {
-		if sm, err := tx.Submit(msg); err != nil {
+		if sm, err := tc.Submit(msg); err != nil {
 			return []smpp.ShortMessage{}, err
 		} else {
 			return []smpp.ShortMessage{*sm}, nil
 		}
 	} else {
 		// concatenated message
-		return tx.SubmitLongMsg(msg)
+		return tc.SubmitLongMsg(msg)
 	}
 }
