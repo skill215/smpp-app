@@ -78,11 +78,11 @@ func GetSmppConf() (*AppConfig, error) {
 	c := &AppConfig{}
 	yamlFile, err := os.ReadFile("smpp-app.yaml")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("read conf err %v\n", err)
 		return nil, err
 	}
 	if err = yaml.Unmarshal(yamlFile, c); err != nil {
-		fmt.Println(err)
+		fmt.Printf("parse conf err %v\n", err)
 		return nil, err
 	}
 	log.Printf("%+v", c)

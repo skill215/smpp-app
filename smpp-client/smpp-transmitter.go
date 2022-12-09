@@ -83,7 +83,7 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 				// for USC2 encoding
 				smlist, err := st.submitMsg(tx, msg)
 				if err != nil {
-					fmt.Println("transmiter error ", err)
+					//fmt.Println("transmiter error ", err)
 					time.Sleep(50 * time.Microsecond)
 				} else {
 					for _, sm := range smlist {
