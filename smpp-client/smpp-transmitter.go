@@ -10,8 +10,8 @@ import (
 	"github.com/skill215/go-smpp/smpp"
 	"github.com/skill215/smpp-app/broker"
 	"github.com/skill215/smpp-app/config"
+	"github.com/skill215/smpp-app/limiter"
 	msggenerator "github.com/skill215/smpp-app/msg-generator"
-	"golang.org/x/time/rate"
 )
 
 type SmppTransmiter struct {
@@ -52,8 +52,9 @@ func (st *SmppTransmiter) Init() {
 
 func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 	conn := tx.Bind()
-	limiter := rate.NewLimiter(0, 0)
-
+	limiter := limiter.Limiter{}
+	limiter.Set(0, time.Second)
+	msg := st.msgGenerator.GenerateMsg()
 	// goroutine to reconnect
 	go func() {
 		for {
@@ -71,7 +72,8 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 			msg := <-msgCh
 			tps := msg.(int)
 			// every second allow tps, token bucket contains 1
-			limiter = rate.NewLimiter(rate.Limit(tps), 1)
+
+			limiter.Set(tps, time.Second)
 		}
 	}()
 
@@ -79,7 +81,7 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 	go func() {
 		for {
 			if limiter.Allow() {
-				msg := st.msgGenerator.GenerateMsg()
+				msg.Dst = st.msgGenerator.GenerateDaddr()
 				// for USC2 encoding
 				smlist, err := st.submitMsg(tx, msg)
 				if err != nil {

@@ -15,17 +15,23 @@ type MsgGenerator struct {
 	sync.Mutex
 	index int
 	conf  *config.MessageConfig
+	stop  int
 }
 
 func New(conf *config.MessageConfig) *MsgGenerator {
+	stop := conf.Send.Dst.Daddr.Start
+	if stop <= conf.Send.Dst.Daddr.Start {
+		stop = int(math.Pow(10, float64(conf.Send.Dst.Daddr.GenerateLen))) - 1
+	}
 	return &MsgGenerator{
 		conf: conf,
+		stop: stop,
 	}
 }
 
 func (mg *MsgGenerator) GenerateMsg() *smpp.ShortMessage {
 	sms := smpp.ShortMessage{
-		Dst:           mg.generateDaddr(),
+		//Dst:           mg.generateDaddr(),
 		SourceAddrTON: uint8(mg.conf.Send.Src.Ton),
 		SourceAddrNPI: uint8(mg.conf.Send.Src.Npi),
 		DestAddrTON:   uint8(mg.conf.Send.Dst.Ton),
@@ -43,14 +49,10 @@ func (mg *MsgGenerator) GenerateMsg() *smpp.ShortMessage {
 	return &sms
 }
 
-func (mg *MsgGenerator) generateDaddr() string {
+func (mg *MsgGenerator) GenerateDaddr() string {
 	mg.Lock()
 	defer mg.Unlock()
-	stop := mg.conf.Send.Dst.Daddr.Stop
-	if stop <= mg.conf.Send.Dst.Daddr.Start {
-		stop = int(math.Pow(10, float64(mg.conf.Send.Dst.Daddr.GenerateLen))) - 1
-	}
-	if mg.index >= stop {
+	if mg.index >= mg.stop {
 		mg.index = mg.conf.Send.Dst.Daddr.Start - 1
 	}
 	mg.index++
