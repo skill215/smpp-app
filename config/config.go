@@ -33,6 +33,7 @@ type MessageConfig struct {
 		} `yaml:"dst"`
 		RequireSR bool   `default:"false" yaml:"require-sr"`
 		Content   string `yaml:"content"`
+		Dcs       int    `default:"0" yaml:"dcs"`
 	} `yaml:"send"`
 }
 
@@ -74,9 +75,9 @@ func (c *AppConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func GetSmppConf() (*AppConfig, error) {
+func GetSmppConf(path string) (*AppConfig, error) {
 	c := &AppConfig{}
-	yamlFile, err := os.ReadFile("smpp-app.yaml")
+	yamlFile, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Printf("read conf err %v\n", err)
 		return nil, err

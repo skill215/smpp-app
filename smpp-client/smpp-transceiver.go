@@ -56,7 +56,7 @@ func (st *SmppTransceiver) bind(tc *smpp.Transceiver, msgCh chan interface{}) {
 	tc.Handler = st.handleAT
 	limiter := limiter.Limiter{}
 	limiter.Set(0, time.Second)
-	msg := st.msgGenerator.GenerateMsg()
+
 	// goroutine to reconnect
 	go func() {
 		for {
@@ -83,6 +83,7 @@ func (st *SmppTransceiver) bind(tc *smpp.Transceiver, msgCh chan interface{}) {
 	go func() {
 		for {
 			if limiter.Allow() {
+				msg := st.msgGenerator.GenerateMsg()
 				msg.Dst = st.msgGenerator.GenerateDaddr()
 				// for USC2 encoding
 				smlist, err := st.submitMsg(tc, msg)

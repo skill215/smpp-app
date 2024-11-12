@@ -24,6 +24,7 @@ service:
             generate-length: 6
         require-sr: false
         content: just a test message without concat
+        dcs: 0
   - 
     server:
       addr: localhost

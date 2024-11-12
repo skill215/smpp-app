@@ -1,0 +1,257 @@
+service:
+  smpp:
+  - 
+    server:
+      addr: 127.0.0.1
+      port: 5588
+      username: smpp10
+      password: smpp
+    client:
+      bind-type: transceiver
+      conn-num: 10
+    message:
+      send:
+        src:
+          npi: 1
+          ton: 1
+          oaddr: 1234
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 9981
+            suffix: 0
+            generate-length: 4
+        require-sr: true
+        content: The kitten chased a butterfly through the meadow.
+        dcs: 0
+  - 
+    server:
+      addr: 127.0.0.1
+      port: 5589
+      username: smpp11
+      password: smpp
+    client:
+      bind-type: transceiver
+      conn-num: 10
+    message:
+      send:
+        src:
+          npi: 1
+          ton: 1
+          oaddr: 1235
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 9982
+            suffix: 0
+            generate-length: 4
+        require-sr: true
+        content: The kitten chased a butterfly through the meadow.
+        dcs: 0
+  - 
+    server:
+      addr: 127.0.0.1
+      port: 5590
+      username: smpp12
+      password: smpp
+    client:
+      bind-type: transceiver
+      conn-num: 10
+    message:
+      send:
+        src:
+          npi: 1
+          ton: 1
+          oaddr: 1236
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 9983
+            suffix: 0
+            generate-length: 4
+        require-sr: true
+        content: The kitten chased a butterfly through the meadow.
+        dcs: 0
+  - 
+    server:
+      addr: 127.0.0.1
+      port: 5588
+      username: smpp13
+      password: smpp
+    client:
+      bind-type: transceiver
+      conn-num: 10
+    message:
+      send:
+        src:
+          npi: 1
+          ton: 1
+          oaddr: 1237
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 9984
+            suffix: 0
+            generate-length: 4
+        require-sr: true
+        content: Theft tragedy.
+        dcs: 0
+  - 
+    server:
+      addr: 127.0.0.1
+      port: 5589
+      username: smpp14
+      password: smpp
+    client:
+      bind-type: transceiver
+      conn-num: 10
+    message:
+      send:
+        src:
+          npi: 1
+          ton: 1
+          oaddr: 1238
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 9985
+            suffix: 0
+            generate-length: 4
+        require-sr: true
+        content: The kitten chased a butterfly through the meadow.
+        dcs: 0
+  - 
+    server:
+      addr: 127.0.0.1
+      port: 5590
+      username: smpp15
+      password: smpp
+    client:
+      bind-type: transceiver
+      conn-num: 10
+    message:
+      send:
+        src:
+          npi: 1
+          ton: 1
+          oaddr: 1239
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 9986
+            suffix: 0
+            generate-length: 4
+        require-sr: true
+        content: message has {random url}
+        dcs: 0
+  - 
+    server:
+      addr: 127.0.0.1
+      port: 5588
+      username: smpp16
+      password: smpp
+    client:
+      bind-type: transceiver
+      conn-num: 10
+    message:
+      send:
+        src:
+          npi: 1
+          ton: 1
+          oaddr: 1240
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 9987
+            suffix: 0
+            generate-length: 4
+        require-sr: true
+        content: message has {random url}
+        dcs: 0
+  - 
+    server:
+      addr: 127.0.0.1
+      port: 5590
+      username: smpp17
+      password: smpp
+    client:
+      bind-type: transceiver
+      conn-num: 10
+    message:
+      send:
+        src:
+          npi: 1
+          ton: 1
+          oaddr: 1241
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 9988
+            suffix: 0
+            generate-length: 4
+        require-sr: true
+        content: message has {random url}
+        dcs: 0
+  - 
+    server:
+      addr: 127.0.0.1
+      port: 5588
+      username: smpp18
+      password: smpp
+    client:
+      bind-type: transceiver
+      conn-num: 10
+    message:
+      send:
+        src:
+          npi: 1
+          ton: 1
+          oaddr: 1235
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 1242
+            suffix: 0
+            generate-length: 4
+        require-sr: true
+        content: message has {random url}
+        dcs: 0
+  - 
+    server:
+      addr: 127.0.0.1
+      port: 5589
+      username: smpp19
+      password: smpp
+    client:
+      bind-type: transceiver
+      conn-num: 10
+    message:
+      send:
+        src:
+          npi: 1
+          ton: 1
+          oaddr: 1241
+        dst:
+          ton: 1
+          npi: 1
+          daddr:
+            prefix: 9990
+            suffix: 0
+            generate-length: 4
+        require-sr: true
+        content: message has {random url}
+        dcs: 0
+  rest:
+    addr: 0.0.0.0
+    port: 8081
+  log:
+    level: debug

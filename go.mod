@@ -5,10 +5,10 @@ go 1.18
 require (
 	github.com/armon/go-metrics v0.4.1
 	github.com/creasty/defaults v1.6.0
+	github.com/go-playground/assert/v2 v2.2.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/skill215/go-smpp v0.0.0-20220608133915-343e30c335c9
 	github.com/stretchr/testify v1.7.1
-	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/yaml.v3 v3.0.1
 )

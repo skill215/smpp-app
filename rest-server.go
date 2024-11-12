@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -24,9 +25,12 @@ var (
 )
 
 func main() {
+	confPath := flag.String("c", "smpp-app.yaml", "configuration location")
+	flag.Parse()
+
 	ctx := context.Background()
 	// get smpp app config
-	conf, err := config.GetSmppConf()
+	conf, err := config.GetSmppConf(*confPath)
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +54,7 @@ func main() {
 
 	http.HandleFunc("/startLoop", startLoop)
 	http.HandleFunc("/stopLoop", stopLoop)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(addr), nil))
+	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
 func startLoop(w http.ResponseWriter, r *http.Request) {
