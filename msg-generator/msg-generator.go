@@ -2,9 +2,13 @@ package msggenerator
 
 import (
 	"fmt"
+	"log"
 	"math"
+	"math/rand"
+	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/skill215/go-smpp/smpp"
 	"github.com/skill215/go-smpp/smpp/pdu/pdufield"
@@ -14,9 +18,13 @@ import (
 
 type MsgGenerator struct {
 	sync.Mutex
-	index int
-	conf  *config.MessageConfig
-	stop  int
+	index        int
+	conf         *config.MessageConfig
+	stop         int
+	textContents []string
+	urlContents  []string
+	useRandom    bool
+	rnd          *rand.Rand
 }
 
 func New(conf *config.MessageConfig) *MsgGenerator {
@@ -24,16 +32,89 @@ func New(conf *config.MessageConfig) *MsgGenerator {
 	if stop <= conf.Send.Dst.Daddr.Start {
 		stop = int(math.Pow(10, float64(conf.Send.Dst.Daddr.GenerateLen))) - 1
 	}
-	return &MsgGenerator{
-		conf: conf,
-		stop: stop,
+
+	mg := &MsgGenerator{
+		conf:      conf,
+		stop:      stop,
+		useRandom: false,
+		rnd:       rand.New(rand.NewSource(time.Now().UnixNano())),
+	}
+
+	// Load file contents
+	mg.loadFileContents()
+
+	return mg
+}
+
+func (mg *MsgGenerator) loadFileContents() {
+	// Read text file
+	if content, err := os.ReadFile(mg.conf.Send.TextFile); err != nil {
+		log.Printf("Error reading text file: %v, will use random mode", err)
+		mg.useRandom = true
+	} else {
+		// Split by lines and skip empty lines
+		for _, line := range strings.Split(string(content), "\n") {
+			if trimmed := strings.TrimSpace(line); trimmed != "" {
+				mg.textContents = append(mg.textContents, trimmed)
+			}
+		}
+	}
+
+	// Read url file
+	if content, err := os.ReadFile(mg.conf.Send.UrlFile); err != nil {
+		log.Printf("Error reading url file: %v, will use random mode", err)
+		mg.useRandom = true
+	} else {
+		// Split by lines and skip empty lines
+		for _, line := range strings.Split(string(content), "\n") {
+			if trimmed := strings.TrimSpace(line); trimmed != "" {
+				mg.urlContents = append(mg.urlContents, trimmed)
+			}
+		}
 	}
 }
 
-func (mg *MsgGenerator) GenerateMsgContent(ud string) string {
-	if strings.Contains(ud, "{random url}") {
-		return strings.Replace(ud, "{random url}", generateRandomURL(), 1)
+func (mg *MsgGenerator) getPreDefinedContent() string {
+	if len(mg.textContents) == 0 || len(mg.urlContents) == 0 {
+		// If either file content is empty, return default content
+		return "default message content"
 	}
+
+	// Randomly select text and URL
+	text := mg.textContents[mg.rnd.Intn(len(mg.textContents))]
+	url := mg.urlContents[mg.rnd.Intn(len(mg.urlContents))]
+
+	return text + " " + url
+}
+
+func (mg *MsgGenerator) GenerateMsgContent(ud string) string {
+	// If forced to use random mode or configured as random mode
+	if mg.useRandom || mg.conf.Send.ContentMode == "random" {
+		if strings.Contains(ud, "{random url}") {
+			return strings.Replace(ud, "{random url}", generateRandomURL(), 1)
+		}
+		return ud
+	}
+
+	// If pre-defined mode, directly use file content
+	if mg.conf.Send.ContentMode == "pre-defined" {
+		return mg.getPreDefinedContent()
+	}
+
+	// Mixed mode
+	if mg.conf.Send.ContentMode == "mixed" {
+		// Generate random number between 0-1
+		if mg.rnd.Float64() < mg.conf.Send.PreDefinedContentRatio {
+			return mg.getPreDefinedContent()
+		}
+		// Use random mode
+		if strings.Contains(ud, "{random url}") {
+			return strings.Replace(ud, "{random url}", generateRandomURL(), 1)
+		}
+		return ud
+	}
+
+	// Unknown mode, use random
 	return ud
 }
 

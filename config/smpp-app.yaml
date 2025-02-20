@@ -2,7 +2,7 @@ service:
   smpp:
   - 
     server:
-      addr: localhost
+      addr: 69.234.203.117
       port: 5588
       user: smpp
       password: test
@@ -11,6 +11,10 @@ service:
       conn-num: 5
     message:
       send:
+        text-file: "data/text.txt"
+        url-file: "data/url.txt"
+        content-mode: "mixed"
+        pre-defined-content-ratio: 0.7
         src: 
           npi: 1
           ton: 1
@@ -27,7 +31,7 @@ service:
         dcs: 0
   - 
     server:
-      addr: localhost
+      addr: 69.234.203.117
       port: 5588
       user: smpp
       password: test
@@ -36,6 +40,10 @@ service:
       conn-num: 5
     message:
       send:
+        text-file: "data/text.txt"
+        url-file: "data/url.txt"
+        content-mode: "pre-defined"
+        pre-defined-content-ratio: 0.7
         src: 
           npi: 1
           ton: 1
@@ -51,7 +59,7 @@ service:
         content: just a test message without concat
   - 
     server:
-      addr: localhost
+      addr: 69.234.203.117
       port: 5588
       user: smpp
       password: test

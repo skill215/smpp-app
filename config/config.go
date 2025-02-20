@@ -21,7 +21,11 @@ type AddrConfig struct {
 
 type MessageConfig struct {
 	Send struct {
-		Src struct {
+		TextFile               string  `yaml:"text-file"`
+		UrlFile                string  `yaml:"url-file"`
+		ContentMode            string  `default:"random" yaml:"content-mode"`
+		PreDefinedContentRatio float64 `default:"0.5" yaml:"pre-defined-content-ratio"`
+		Src                    struct {
 			Npi   uint16 `default:"1" yaml:"npi"`
 			Ton   uint16 `default:"1" yaml:"ton"`
 			Oaddr string `yaml:"oaddr"`

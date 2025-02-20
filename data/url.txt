@@ -1,0 +1,10 @@
+https://example.com/welcome
+https://example.com/verify
+https://example.com/offer/special
+https://example.com/news/latest
+https://example.com/sale/weekend
+https://example.com/account/status
+https://example.com/tracking/123
+https://example.com/appointment
+https://example.com/features/new
+https://example.com/support 
