@@ -2,32 +2,59 @@ service:
   smpp:
   - 
     server:
+      # SMPP server address
       addr: 69.234.203.117
+      # SMPP server port
       port: 5588
+      # SMPP server authentication username
       user: smpp1
+      # SMPP server authentication password
       password: smpp
     client:
+      # SMPP client bind type: transmitter, receiver, or transceiver
       bind-type: transmitter
+      # Number of concurrent connections
       conn-num: 1
     message:
       send:
+        # File containing predefined text messages
         text-file: "data/text.txt"
+        # File containing predefined URLs
         url-file: "data/url.txt"
+        # Message content mode: random, pre-defined, or mixed
         content-mode: "mixed"
+        # Ratio of predefined content when using mixed mode (0.0-1.0)
         pre-defined-content-ratio: 0.7
         src: 
+          # Source address Numbering Plan Indicator
           npi: 1
+          # Source address Type of Number
           ton: 1
+          # Source address (sender number)
           oaddr: 1234
         dst:
+          # Destination address Type of Number
           ton: 1
+          # Destination address Numbering Plan Indicator
           npi: 1
           daddr:
-            prefix: 123
+            # Prefix for generated destination address
+            prefix: 789
+            # Suffix for generated destination address
             suffix: 000
+            # Length of the generated number part
             generate-length: 6
+            # Number generation type: sequence or random
+            generate-type: random
+            # Start value for sequence mode or minimum value for random mode
+            start: 0
+            # Stop value for sequence mode or maximum value for random mode
+            stop: 999999
+        # Whether to request delivery receipt
         require-sr: false
+        # Default message content
         content: just a test message without concat
+        # Data Coding Scheme: 0-GSM7, 3-Latin1, 4-Binary, 8-UCS2
         dcs: 0
   # - 
   #   server:
@@ -67,7 +94,10 @@ service:
       bind-type: receiver
       conn-num: 1
   rest:
+    # REST server bind address
     addr: 0.0.0.0
+    # REST server port
     port: 8081
   log:
+    # Log level: debug, info, warn, error
     level: debug

@@ -3,6 +3,7 @@ package smppclient
 import (
 	"context"
 	"fmt"
+	"net"
 	"time"
 
 	gometrics "github.com/armon/go-metrics"
@@ -64,42 +65,67 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 	msg := st.msgGenerator.GenerateMsg()
 	// goroutine to reconnect
 	go func() {
+		var lastStatus string
 		for {
 			status := <-conn
+			currentStatus := status.Status().String()
+
 			if status.Error() != nil {
 				st.log.WithFields(logrus.Fields{
-					"addr":  tx.Addr,
-					"user":  tx.User,
-					"type":  st.conf.Client.Type,
-					"error": status.Error(),
+					"addr":       tx.Addr,
+					"user":       tx.User,
+					"type":       st.conf.Client.Type,
+					"error":      status.Error(),
+					"error_type": fmt.Sprintf("%T", status.Error()),
+					"status":     currentStatus,
+					"raw_status": fmt.Sprintf("%+v", status),
 				}).Error("SMPP bind failed")
+
+				// 添加网络诊断日志
+				if netErr, ok := status.Error().(*net.OpError); ok {
+					st.log.WithFields(logrus.Fields{
+						"network":     netErr.Net,
+						"source":      netErr.Source,
+						"address":     netErr.Addr,
+						"timeout":     netErr.Timeout(),
+						"temporary":   netErr.Temporary(),
+						"error_phase": netErr.Op,
+					}).Error("Network operation error details")
+				}
+
 				time.Sleep(5 * time.Second)
 				st.log.WithFields(logrus.Fields{
-					"addr": tx.Addr,
-					"user": tx.User,
+					"addr":    tx.Addr,
+					"user":    tx.User,
+					"attempt": "reconnect",
 				}).Debug("Attempting to rebind...")
 				conn = tx.Bind()
-			} else if status.Status().String() != "Connected" {
+			} else if currentStatus != "Connected" {
 				st.log.WithFields(logrus.Fields{
-					"addr":   tx.Addr,
-					"user":   tx.User,
-					"type":   st.conf.Client.Type,
-					"status": status.Status().String(),
+					"addr":       tx.Addr,
+					"user":       tx.User,
+					"type":       st.conf.Client.Type,
+					"status":     currentStatus,
+					"prev_error": status.Error(),
+					"raw_status": fmt.Sprintf("%+v", status),
 				}).Warn("SMPP connection status changed")
 				time.Sleep(5 * time.Second)
 				st.log.WithFields(logrus.Fields{
-					"addr": tx.Addr,
-					"user": tx.User,
+					"addr":    tx.Addr,
+					"user":    tx.User,
+					"attempt": "reconnect",
 				}).Debug("Attempting to rebind...")
 				conn = tx.Bind()
-			} else {
+			} else if lastStatus != "Connected" {
+				// 只在从非Connected状态变为Connected状态时打印一次
 				st.log.WithFields(logrus.Fields{
 					"addr":   tx.Addr,
 					"user":   tx.User,
 					"type":   st.conf.Client.Type,
-					"status": status.Status().String(),
+					"status": currentStatus,
 				}).Info("SMPP bind successful")
 			}
+			lastStatus = currentStatus
 		}
 	}()
 
@@ -122,12 +148,24 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 				// for USC2 encoding
 				smlist, err := st.submitMsg(tx, msg)
 				if err != nil {
-					//fmt.Println("transmiter error ", err)
+					st.log.WithFields(logrus.Fields{
+						"addr":           tx.Addr,
+						"user":           tx.User,
+						"dst":            msg.Dst,
+						"error":          err,
+						"content_length": len(msg.Text.Encode()),
+					}).Debug("Failed to submit message")
 					time.Sleep(50 * time.Microsecond)
 				} else {
 					for _, sm := range smlist {
 						st.inm.IncrCounter([]string{"ao"}, 1)
 						if sm.Resp().Header().Status != 0x00000000 {
+							st.log.WithFields(logrus.Fields{
+								"addr":   tx.Addr,
+								"user":   tx.User,
+								"dst":    msg.Dst,
+								"status": sm.Resp().Header().Status,
+							}).Debug("Message submission got non-zero status")
 							st.inm.IncrCounter([]string{"ao failure"}, 1)
 						}
 					}

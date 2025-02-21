@@ -2,7 +2,6 @@ package msggenerator
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"math/rand"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/skill215/go-smpp/smpp"
 	"github.com/skill215/go-smpp/smpp/pdu/pdufield"
 	"github.com/skill215/go-smpp/smpp/pdu/pdutext"
@@ -49,7 +49,7 @@ func New(conf *config.MessageConfig) *MsgGenerator {
 func (mg *MsgGenerator) loadFileContents() {
 	// Read text file
 	if content, err := os.ReadFile(mg.conf.Send.TextFile); err != nil {
-		log.Printf("Error reading text file: %v, will use random mode", err)
+		logrus.WithError(err).Error("Error reading text file, will use random mode")
 		mg.useRandom = true
 	} else {
 		// Split by lines and skip empty lines
@@ -62,7 +62,7 @@ func (mg *MsgGenerator) loadFileContents() {
 
 	// Read url file
 	if content, err := os.ReadFile(mg.conf.Send.UrlFile); err != nil {
-		log.Printf("Error reading url file: %v, will use random mode", err)
+		logrus.WithError(err).Error("Error reading url file, will use random mode")
 		mg.useRandom = true
 	} else {
 		// Split by lines and skip empty lines
@@ -157,12 +157,41 @@ func (mg *MsgGenerator) GenerateMsg() *smpp.ShortMessage {
 func (mg *MsgGenerator) GenerateDaddr() string {
 	mg.Lock()
 	defer mg.Unlock()
-	if mg.index >= mg.stop {
-		mg.index = mg.conf.Send.Dst.Daddr.Start - 1
+
+	var middleNum int
+	switch strings.ToLower(mg.conf.Send.Dst.Daddr.GenerateType) {
+	case "random":
+		// For random type, Start is min value, Stop is max value
+		if mg.conf.Send.Dst.Daddr.Stop <= mg.conf.Send.Dst.Daddr.Start {
+			// If Stop is not set or invalid, generate number between Start and Start+10^GenerateLen
+			maxVal := int(math.Pow10(mg.conf.Send.Dst.Daddr.GenerateLen)) - 1
+			middleNum = mg.rnd.Intn(maxVal-mg.conf.Send.Dst.Daddr.Start+1) + mg.conf.Send.Dst.Daddr.Start
+		} else {
+			middleNum = mg.rnd.Intn(mg.conf.Send.Dst.Daddr.Stop-mg.conf.Send.Dst.Daddr.Start+1) + mg.conf.Send.Dst.Daddr.Start
+		}
+	default: // "sequence" or any other value
+		if mg.index >= mg.stop {
+			mg.index = mg.conf.Send.Dst.Daddr.Start - 1
+		}
+		mg.index++
+		middleNum = mg.index
 	}
-	mg.index++
-	daddr := fmt.Sprintf("%s%0*d%s", mg.conf.Send.Dst.Daddr.Prefix, mg.conf.Send.Dst.Daddr.GenerateLen, mg.index, mg.conf.Send.Dst.Daddr.Suffix)
-	//fmt.Println("daddr is ", daddr)
+
+	// Format: prefix + number(padded with zeros to GenerateLen) + suffix
+	daddr := fmt.Sprintf("%s%0*d%s",
+		mg.conf.Send.Dst.Daddr.Prefix,
+		mg.conf.Send.Dst.Daddr.GenerateLen,
+		middleNum,
+		mg.conf.Send.Dst.Daddr.Suffix)
+
+	// logrus.WithFields(logrus.Fields{
+	// 	"prefix": mg.conf.Send.Dst.Daddr.Prefix,
+	// 	"middle": middleNum,
+	// 	"suffix": mg.conf.Send.Dst.Daddr.Suffix,
+	// 	"type":   mg.conf.Send.Dst.Daddr.GenerateType,
+	// 	"daddr":  daddr,
+	// }).Debug("Generated destination address")
+
 	return daddr
 }
 
