@@ -45,7 +45,7 @@ type SmppConfig struct {
 	Server struct {
 		Addr     string `default:"localhost" yaml:"addr"`
 		Port     uint16 `default:"5588" yaml:"port"`
-		User     string `yaml:"username"`
+		User     string `yaml:"user"`
 		Password string `yaml:"password"`
 	} `yaml:"server"`
 	Client struct {

@@ -52,6 +52,13 @@ func (st *SmppTransmiter) Init() {
 
 func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 	conn := tx.Bind()
+	st.log.WithFields(logrus.Fields{
+		"addr":     tx.Addr,
+		"user":     tx.User,
+		"type":     st.conf.Client.Type,
+		"conn_num": st.conf.Client.Count,
+	}).Info("Starting SMPP bind")
+
 	limiter := limiter.Limiter{}
 	limiter.Set(0, time.Second)
 	msg := st.msgGenerator.GenerateMsg()
@@ -59,9 +66,39 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 	go func() {
 		for {
 			status := <-conn
-			if status.Error() != nil || status.Status().String() != "Connected" {
+			if status.Error() != nil {
+				st.log.WithFields(logrus.Fields{
+					"addr":  tx.Addr,
+					"user":  tx.User,
+					"type":  st.conf.Client.Type,
+					"error": status.Error(),
+				}).Error("SMPP bind failed")
 				time.Sleep(5 * time.Second)
+				st.log.WithFields(logrus.Fields{
+					"addr": tx.Addr,
+					"user": tx.User,
+				}).Debug("Attempting to rebind...")
 				conn = tx.Bind()
+			} else if status.Status().String() != "Connected" {
+				st.log.WithFields(logrus.Fields{
+					"addr":   tx.Addr,
+					"user":   tx.User,
+					"type":   st.conf.Client.Type,
+					"status": status.Status().String(),
+				}).Warn("SMPP connection status changed")
+				time.Sleep(5 * time.Second)
+				st.log.WithFields(logrus.Fields{
+					"addr": tx.Addr,
+					"user": tx.User,
+				}).Debug("Attempting to rebind...")
+				conn = tx.Bind()
+			} else {
+				st.log.WithFields(logrus.Fields{
+					"addr":   tx.Addr,
+					"user":   tx.User,
+					"type":   st.conf.Client.Type,
+					"status": status.Status().String(),
+				}).Info("SMPP bind successful")
 			}
 		}
 	}()

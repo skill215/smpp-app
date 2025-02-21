@@ -4,11 +4,11 @@ service:
     server:
       addr: 69.234.203.117
       port: 5588
-      user: smpp
-      password: test
+      user: smpp1
+      password: smpp
     client:
       bind-type: transmitter
-      conn-num: 5
+      conn-num: 1
     message:
       send:
         text-file: "data/text.txt"
@@ -29,45 +29,45 @@ service:
         require-sr: false
         content: just a test message without concat
         dcs: 0
+  # - 
+  #   server:
+  #     addr: 69.234.203.117
+  #     port: 5588
+  #     user: smpp1
+  #     password: smpp
+  #   client:
+  #     bind-type: transceiver
+  #     conn-num: 1
+  #   message:
+  #     send:
+  #       text-file: "data/text.txt"
+  #       url-file: "data/url.txt"
+  #       content-mode: "pre-defined"
+  #       pre-defined-content-ratio: 0.7
+  #       src: 
+  #         npi: 1
+  #         ton: 1
+  #         oaddr: 1234
+  #       dst:
+  #         ton: 1
+  #         npi: 1
+  #         daddr:
+  #           prefix: 123
+  #           suffix: 000
+  #           generate-length: 6
+  #       require-sr: false
+  #       content: just a test message without concat
   - 
     server:
       addr: 69.234.203.117
       port: 5588
-      user: smpp
-      password: test
-    client:
-      bind-type: transceiver
-      conn-num: 5
-    message:
-      send:
-        text-file: "data/text.txt"
-        url-file: "data/url.txt"
-        content-mode: "pre-defined"
-        pre-defined-content-ratio: 0.7
-        src: 
-          npi: 1
-          ton: 1
-          oaddr: 1234
-        dst:
-          ton: 1
-          npi: 1
-          daddr:
-            prefix: 123
-            suffix: 000
-            generate-length: 6
-        require-sr: false
-        content: just a test message without concat
-  - 
-    server:
-      addr: 69.234.203.117
-      port: 5588
-      user: smpp
-      password: test
+      user: smpp1
+      password: smpp
     client:
       bind-type: receiver
-      conn-num: 10
+      conn-num: 1
   rest:
     addr: 0.0.0.0
-    port: 8080
+    port: 8081
   log:
-    level: info
+    level: debug

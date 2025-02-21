@@ -1,0 +1,1 @@
+./rest-server -c config/smpp-app.yaml

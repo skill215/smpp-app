@@ -2,6 +2,7 @@ package logger
 
 import (
 	"io"
+	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -26,5 +27,7 @@ func SetupLogger() {
 	}
 
 	logrus.SetFormatter(logFormatter)
-	logrus.SetOutput(io.Writer(logger))
+	// Write to both file and console
+	mw := io.MultiWriter(os.Stdout, logger)
+	logrus.SetOutput(mw)
 }
