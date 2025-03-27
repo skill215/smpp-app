@@ -62,7 +62,7 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 
 	limiter := limiter.Limiter{}
 	limiter.Set(0, time.Second)
-	msg := st.msgGenerator.GenerateMsg()
+
 	// goroutine to reconnect
 	go func() {
 		var lastStatus string
@@ -81,7 +81,7 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 					"raw_status": fmt.Sprintf("%+v", status),
 				}).Error("SMPP bind failed")
 
-				// 添加网络诊断日志
+				// Add network diagnostic logs
 				if netErr, ok := status.Error().(*net.OpError); ok {
 					st.log.WithFields(logrus.Fields{
 						"network":     netErr.Net,
@@ -117,7 +117,7 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 				}).Debug("Attempting to rebind...")
 				conn = tx.Bind()
 			} else if lastStatus != "Connected" {
-				// 只在从非Connected状态变为Connected状态时打印一次
+				// Only print once when transitioning from non-Connected to Connected status
 				st.log.WithFields(logrus.Fields{
 					"addr":   tx.Addr,
 					"user":   tx.User,
@@ -144,6 +144,8 @@ func (st *SmppTransmiter) bind(tx *smpp.Transmitter, msgCh chan interface{}) {
 	go func() {
 		for {
 			if limiter.Allow() {
+				// Generate a new message each time before sending
+				msg := st.msgGenerator.GenerateMsg()
 				msg.Dst = st.msgGenerator.GenerateDaddr()
 				// for USC2 encoding
 				smlist, err := st.submitMsg(tx, msg)

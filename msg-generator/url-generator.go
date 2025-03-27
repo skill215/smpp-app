@@ -41,7 +41,8 @@ func randProto() string {
 	return "https"
 }
 
-func generateRandomURL() string {
+// GenerateRandomURL generates a random URL with random subdomain, domain, TLD, path and query parameters
+func GenerateRandomURL() string {
 	protocol := randProto()
 	subdomain := randString(5)
 	domain := randString(8)

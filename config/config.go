@@ -37,7 +37,6 @@ type MessageConfig struct {
 		} `yaml:"dst"`
 		RequireSR bool   `default:"false" yaml:"require-sr"`
 		Content   string `yaml:"content"`
-		Dcs       int    `default:"0" yaml:"dcs"`
 	} `yaml:"send"`
 }
 

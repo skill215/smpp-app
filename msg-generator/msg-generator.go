@@ -91,7 +91,7 @@ func (mg *MsgGenerator) GenerateMsgContent(ud string) string {
 	// If forced to use random mode or configured as random mode
 	if mg.useRandom || mg.conf.Send.ContentMode == "random" {
 		if strings.Contains(ud, "{random url}") {
-			return strings.Replace(ud, "{random url}", generateRandomURL(), 1)
+			return strings.Replace(ud, "{random url}", GenerateRandomURL(), 1)
 		}
 		return ud
 	}
@@ -109,7 +109,7 @@ func (mg *MsgGenerator) GenerateMsgContent(ud string) string {
 		}
 		// Use random mode
 		if strings.Contains(ud, "{random url}") {
-			return strings.Replace(ud, "{random url}", generateRandomURL(), 1)
+			return strings.Replace(ud, "{random url}", GenerateRandomURL(), 1)
 		}
 		return ud
 	}
@@ -118,19 +118,57 @@ func (mg *MsgGenerator) GenerateMsgContent(ud string) string {
 	return ud
 }
 
+// detectDCS determines the appropriate Data Coding Scheme based on message content
+func detectDCS(content string) int {
+	for _, r := range content {
+		// Check for CJK characters (Chinese, Japanese, Korean)
+		if (r >= 0x4E00 && r <= 0x9FFF) || // CJK Unified Ideographs
+			(r >= 0x3040 && r <= 0x309F) || // Hiragana
+			(r >= 0x30A0 && r <= 0x30FF) || // Katakana
+			(r >= 0xAC00 && r <= 0xD7AF) || // Korean Hangul
+			(r >= 0x0590 && r <= 0x05FF) || // Hebrew
+			r > 0x7F { // Any other non-ASCII character
+			return 8 // Use UCS2 for Unicode characters
+		}
+	}
+
+	// Check if content contains extended Latin1 characters
+	for _, r := range content {
+		if r > 0x7F && r <= 0xFF {
+			return 3 // Use Latin1 for extended ASCII
+		}
+	}
+
+	return 0 // Default to GSM7 for basic ASCII
+}
+
 func (mg *MsgGenerator) GenerateMsg() *smpp.ShortMessage {
 	sms := smpp.ShortMessage{
-		//Dst:           mg.generateDaddr(),
 		SourceAddrTON: uint8(mg.conf.Send.Src.Ton),
 		SourceAddrNPI: uint8(mg.conf.Send.Src.Npi),
 		DestAddrTON:   uint8(mg.conf.Send.Dst.Ton),
 		DestAddrNPI:   uint8(mg.conf.Send.Dst.Npi),
-		//Text:          pdutext.Latin1(mg.conf.Send.Content),
-		//Text: pdutext.Raw([]byte(mg.conf.Send.Content)),
-		//ESMClass: 0x40,
 	}
 	content := mg.GenerateMsgContent(mg.conf.Send.Content)
-	switch mg.conf.Send.Dcs {
+
+	// Detect appropriate DCS based on content
+	dcs := detectDCS(content)
+
+	// Add debug logging for message content and DCS
+	logrus.WithFields(logrus.Fields{
+		"content": content,
+		"dcs":     dcs,
+		"dcs_type": map[int]string{
+			0: "GSM7",
+			3: "Latin1",
+			4: "Binary",
+			8: "UCS2",
+		}[dcs],
+		"content_length": len(content),
+		"content_bytes":  len([]byte(content)),
+	}).Debug("Generated message content")
+
+	switch dcs {
 	case 0:
 		sms.Text = pdutext.GSM7(content)
 	case 3:

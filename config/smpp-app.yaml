@@ -54,8 +54,10 @@ service:
         require-sr: false
         # Default message content
         content: just a test message without concat
-        # Data Coding Scheme: 0-GSM7, 3-Latin1, 4-Binary, 8-UCS2
-        dcs: 0
+        # Note: DCS (Data Coding Scheme) is now automatically detected based on message content:
+        # - GSM7 (0) for basic ASCII
+        # - Latin1 (3) for extended ASCII
+        # - UCS2 (8) for Unicode (CJK, Hebrew, etc.)
   # - 
   #   server:
   #     addr: 69.234.203.117
@@ -97,7 +99,7 @@ service:
     # REST server bind address
     addr: 0.0.0.0
     # REST server port
-    port: 8081
+    port: 8101
   log:
     # Log level: debug, info, warn, error
     level: debug
